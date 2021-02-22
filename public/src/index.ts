@@ -1,6 +1,7 @@
 import * as THREE from "../dist/three/build/three.module.js"
 import {FBXLoader} from "../dist/three/examples/jsm/loaders/FBXLoader.js";
 
+
 const loader = new FBXLoader();
 
 
@@ -10,22 +11,14 @@ const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.inner
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.setClearColor(0xEEEEEE);
+renderer.shadowMap.enabled = true;
 document.body.appendChild( renderer.domElement );
 
-let particleLight= new THREE.Mesh(
-    new THREE.SphereGeometry( 4, 8, 8 ),
-    new THREE.MeshBasicMaterial( { color: 0xffffff } )
-);
-particleLight.position.x = 5
-particleLight.position.y = 5
-particleLight.position.z = 500
+const clock = new THREE.Clock();
 
-scene.add( particleLight );
-const pointLight = new THREE.PointLight( 0xffffff, 2, 800 );
-particleLight.add( pointLight );
+scene.add( new THREE.AmbientLight( 0x404040  ,5) );
 
-
-const colors = new Uint8Array( 0 + 2 );
+const colors = new Uint8Array( 200);
 
 for ( let c = 0; c <= colors.length; c ++ ) {
 
@@ -40,9 +33,12 @@ const diffuseColor = new THREE.Color().setHSL( .5, 0.5, .5 * 0.5 + 0.1 ).multipl
 
 const material = new THREE.MeshToonMaterial( {
     color: diffuseColor,
-    gradientMap: gradientMap
+    gradientMap: gradientMap,
+    morphTargets: true
 } );
 
+let player;
+let mixer;
 loader.load(
     '../dist/res/SK_Character_Dummy_Male_01.fbx',
     (group) => {
@@ -50,27 +46,48 @@ loader.load(
         group.traverse(function (object) {
             if(object instanceof  THREE.Mesh) {
                 // @ts-ignore
-                 object.material = material;
+                //object.material = material;
+                object.receiveShadow=false;
+
             }
+            object.receiveShadow=false;
         });
-        group.rotation.y += Math.PI/2
-        group.rotation.z += Math.PI/2
-        scene.add(group);
+       group.rotation.y += Math.PI
+       group.rotation.x += Math.PI/2
+       group.receiveShadow=false;
+
+
+        loader.load( '../dist/res/walking.fbx', function ( object ) {
+            group.animations = object.animations
+            mixer = new THREE.AnimationMixer( group );
+            const action = mixer.clipAction( group.animations[0] );
+            action.play();
+
+        } );
+
+       scene.add(group);
+       player = group;
     },
     (error) => {
         console.log(error);
     }
-)
+);
 
 
-const geometry = new THREE.BoxGeometry(10,10,1);
+const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
+mesh.rotation.z = - Math.PI/2;
+mesh.receiveShadow = true;
+scene.add( mesh );
 
-const cube = new THREE.Mesh( geometry, material );
-
-//scene.add( cube );
+const grid = new THREE.GridHelper( 2000, 20, 0x000000, 0x000000 );
+grid.material.opacity = 0.2;
+grid.rotation.x = - Math.PI/2;
+grid.material.transparent = true;
+scene.add( grid );
 
 camera.position.z = 500;
-camera.rotation.x=Math.PI/6;
+camera.position.y = -300;
+camera.rotation.x=Math.PI/4;
 let keys: Array<boolean> = [false, false, false, false];
 function KeyDown(event: KeyboardEvent){
     if(event.code == "KeyW"){
@@ -103,21 +120,31 @@ function KeyUp(event: KeyboardEvent){
 document.addEventListener('keydown', KeyDown);
 document.addEventListener('keyup', KeyUp);
 
-
+const speed = 2;
 const animate = function () {
     requestAnimationFrame( animate );
 
+    const delta = clock.getDelta();
+    if ( mixer && keys[0] ){
+        mixer.update( delta );
+        console.log("guhy")
+    }
+
     if(keys[0]){
-        camera.position.y +=.5;
+        camera.position.y +=speed;
+        player.position.y +=speed;
     }
     if(keys[1]){
-        camera.position.x +=.5;
+        camera.position.x +=speed;
+        player.position.x +=speed;
     }
     if(keys[2]){
-        camera.position.y -=.5;
+        camera.position.y -=speed;
+        player.position.y -=speed;
     }
     if(keys[3]){
-        camera.position.x -=.5;
+        camera.position.x -=speed;
+        player.position.x -=speed;
     }
     renderer.render( scene, camera );
 };
