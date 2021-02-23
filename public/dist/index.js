@@ -114,29 +114,35 @@ const animate = function () {
         mixer.update(delta);
         console.log("guhy");
     }
-    let vec = Mouse.sub(halfPoint);
+    let vec = new THREE.Vector2(Mouse.x, Mouse.y);
+    vec.sub(halfPoint);
     vec = vec.normalize();
-    player.rotation.y = vec.angle();
+    console.log(vec);
+    player.rotation.y = -vec.angle() + (Math.PI / 2);
     //movement from input
     if (keys[0]) {
-        camera.position.y += speed;
-        player.position.y += speed;
-        player.rotation.y = Math.PI;
+        camera.position.y += -vec.y * speed;
+        camera.position.x += vec.x * speed;
+        player.position.y += -vec.y * speed;
+        player.position.x += vec.x * speed;
     }
     if (keys[1]) {
-        camera.position.x += speed;
-        player.position.x += speed;
-        player.rotation.y = Math.PI / 2;
+        camera.position.y += -vec.x * speed;
+        camera.position.x += -vec.y * speed;
+        player.position.y += -vec.x * speed;
+        player.position.x += -vec.y * speed;
     }
     if (keys[2]) {
-        camera.position.y -= speed;
-        player.position.y -= speed;
-        player.rotation.y = 0;
+        camera.position.y += vec.y * speed;
+        camera.position.x += -vec.x * speed;
+        player.position.y += vec.y * speed;
+        player.position.x += -vec.x * speed;
     }
     if (keys[3]) {
-        camera.position.x -= speed;
-        player.position.x -= speed;
-        player.rotation.y = 3 * Math.PI / 2;
+        camera.position.y += vec.x * speed;
+        camera.position.x += vec.y * speed;
+        player.position.y += vec.x * speed;
+        player.position.x += vec.y * speed;
     }
     //player rotation
     renderer.render(scene, camera);

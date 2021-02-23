@@ -47,33 +47,33 @@ let player;
 let mixer;
 loader.load('../dist/res/SK_Character_Dummy_Male_01.fbx', (group) => {
 
-        group.traverse(function (object) {
-            if(object instanceof  THREE.Mesh) {
-                // @ts-ignore
-                //object.material = material;
+    group.traverse(function (object) {
+        if(object instanceof  THREE.Mesh) {
+            // @ts-ignore
+            //object.material = material;
 
-            }
-            object.receiveShadow=false;
+        }
+        object.receiveShadow=false;
 
-        });
-       group.rotation.y += Math.PI
-       group.rotation.x += Math.PI/2
-       group.receiveShadow=false;
-       group.scale.set(.5,.5,.5)
-
-
-
-        loader.load( '../dist/res/walking.fbx', function ( object ) {
-            group.animations = object.animations
-            mixer = new THREE.AnimationMixer( group );
-            const action = mixer.clipAction( group.animations[0] );
-            action.play();
-
-        } );
-
-       scene.add(group);
-       player = group;
     });
+    group.rotation.y += Math.PI
+    group.rotation.x += Math.PI/2
+    group.receiveShadow=false;
+    group.scale.set(.5,.5,.5)
+
+
+
+    loader.load( '../dist/res/walking.fbx', function ( object ) {
+        group.animations = object.animations
+        mixer = new THREE.AnimationMixer( group );
+        const action = mixer.clipAction( group.animations[0] );
+        action.play();
+
+    } );
+
+    scene.add(group);
+    player = group;
+});
 
 //floor
 const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
@@ -145,30 +145,38 @@ const animate = function () {
         console.log("guhy")
     }
 
-    let vec = Mouse.sub(halfPoint);
-    vec = vec.normalize();
-    player.rotation.y= vec.angle()
+    let vec:Vector2 = new THREE.Vector2(Mouse.x, Mouse.y);
+    vec.sub(halfPoint)
+    vec = vec.normalize()
+
+    console.log(vec)
+    player.rotation.y= -vec.angle()+(Math.PI/2)
 
     //movement from input
     if(keys[0]){
-        camera.position.y +=speed;
-        player.position.y +=speed;
-        player.rotation.y = Math.PI;
+        camera.position.y +=-vec.y*speed;
+        camera.position.x +=vec.x*speed;
+        player.position.y +=-vec.y*speed;
+        player.position.x +=vec.x*speed;
     }
     if(keys[1]){
-        camera.position.x +=speed;
-        player.position.x +=speed;
-        player.rotation.y = Math.PI/2;
+
+        camera.position.y +=-vec.x*speed;
+        camera.position.x +=-vec.y*speed;
+        player.position.y +=-vec.x*speed;
+        player.position.x +=-vec.y*speed;
     }
     if(keys[2]){
-        camera.position.y -=speed;
-        player.position.y -=speed;
-        player.rotation.y = 0;
+        camera.position.y +=vec.y*speed;
+        camera.position.x +=-vec.x*speed;
+        player.position.y +=vec.y*speed;
+        player.position.x +=-vec.x*speed;
     }
     if(keys[3]){
-        camera.position.x -=speed;
-        player.position.x -=speed;
-        player.rotation.y = 3*Math.PI/2;
+        camera.position.y +=vec.x*speed;
+        camera.position.x +=vec.y*speed;
+        player.position.y +=vec.x*speed;
+        player.position.x +=vec.y*speed;
     }
 
     //player rotation
