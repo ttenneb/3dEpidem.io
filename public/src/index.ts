@@ -7,7 +7,7 @@ const loader = new FBXLoader();
 
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 5000 );
+const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 2000 );
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
@@ -18,7 +18,10 @@ document.body.appendChild( renderer.domElement );
 const clock = new THREE.Clock();
 
 //lighting
-scene.add( new THREE.AmbientLight( 0x404040  ,5) );
+//scene.add( new THREE.AmbientLight( 0x404040  ,5) );
+const light = new THREE.PointLight( 0x404040 , 20, 1000 );
+light.position.set( 50, 50, 500 );
+scene.add( light );
 
 const colors = new Uint8Array( 200);
 
@@ -39,18 +42,19 @@ const diffuseColor = new THREE.Color().setHSL( .5, 0.5, .5 * 0.5 + 0.1 ).multipl
 const material = new THREE.MeshToonMaterial( {
     color: diffuseColor,
     gradientMap: gradientMap,
-    morphTargets: true
+    skinning: true
 } );
 
 //player module
-let player;
+
+let player:Array<THREE.Group>=[];
 let mixer;
 loader.load('../dist/res/SK_Character_Dummy_Male_01.fbx', (group) => {
 
     group.traverse(function (object) {
         if(object instanceof  THREE.Mesh) {
             // @ts-ignore
-            //object.material = material;
+            object.material = material;
 
         }
         object.receiveShadow=false;
@@ -72,8 +76,36 @@ loader.load('../dist/res/SK_Character_Dummy_Male_01.fbx', (group) => {
     } );
 
     scene.add(group);
-    player = group;
+    player[0]=group;
 });
+    for(var i = 1; i < 5; i++) {
+        loader.load('../dist/res/SK_Character_Dummy_Male_01.fbx', (group) => {
+
+            group.traverse(function (object) {
+                if (object instanceof THREE.Mesh) {
+                    // @ts-ignore
+                    object.material = material;
+
+                }
+                object.receiveShadow = false;
+
+            });
+            group.rotation.y += Math.PI
+            group.rotation.x += Math.PI / 2
+            group.receiveShadow = false;
+            group.scale.set(.5, .5, .5)
+            group.position.x += Math.random() * 1000;
+            group.position.y += Math.random() * 1000;
+
+            scene.add(group);
+            player[i] = group;
+        });
+    }
+
+
+
+//instance rendering test
+
 
 //floor
 const mesh = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
@@ -142,47 +174,54 @@ const animate = function () {
 
     if ( mixer && (keys[0] || keys[1] || keys[2] || keys[3])){
         mixer.update( delta );
-        console.log("guhy")
     }
 
     let vec:Vector2 = new THREE.Vector2(Mouse.x, Mouse.y);
     vec.sub(halfPoint)
     vec = vec.normalize()
 
-    console.log(vec)
-    player.rotation.y= -vec.angle()+(Math.PI/2)
+    player[0].rotation.y= -vec.angle()+(Math.PI/2)
 
     //movement from input
     if(keys[0]){
         camera.position.y +=-vec.y*speed;
         camera.position.x +=vec.x*speed;
-        player.position.y +=-vec.y*speed;
-        player.position.x +=vec.x*speed;
+        player[0].position.y +=-vec.y*speed;
+        player[0].position.x +=vec.x*speed;
     }
     if(keys[1]){
 
         camera.position.y +=-vec.x*speed;
         camera.position.x +=-vec.y*speed;
-        player.position.y +=-vec.x*speed;
-        player.position.x +=-vec.y*speed;
+        player[0].position.y +=-vec.x*speed;
+        player[0].position.x +=-vec.y*speed;
     }
     if(keys[2]){
         camera.position.y +=vec.y*speed;
         camera.position.x +=-vec.x*speed;
-        player.position.y +=vec.y*speed;
-        player.position.x +=-vec.x*speed;
+        player[0].position.y +=vec.y*speed;
+        player[0].position.x +=-vec.x*speed;
     }
     if(keys[3]){
         camera.position.y +=vec.x*speed;
         camera.position.x +=vec.y*speed;
-        player.position.y +=vec.x*speed;
-        player.position.x +=vec.y*speed;
+        player[0].position.y +=vec.x*speed;
+        player[0].position.x +=vec.y*speed;
     }
 
+        for (var i = 1; i < 6; i++) {
+            if(player[i] != undefined) {
+                player[i].position.x += Math.random() * 5 - 2.5;
+                player[i].position.y += Math.random() * 5 - 2.5;
+            }
+        }
+
+
+    console.log(player)
     //player rotation
 
-
     renderer.render( scene, camera );
-};
 
+};
+console.log(scene)
 animate();
